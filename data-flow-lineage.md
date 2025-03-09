@@ -54,12 +54,21 @@ loader:source:ud:|target:db:cloud:myhost.mydb[s1.t1,s2.t2]
 
 # Transformer
 
-The component value of transformer is ``transform:db:<location>:tag[schema.procedure]``
+The component value of transformer is ``transform:<transformer-type>:<transformer-value>``
+
+The transformer type is 
+
+1. ud (represent undefined)
+2. db (represent database)
+
+The **db** value will have the additional value such as ``<location>:tag[schema.table,schema.table]>``  
 
 The ``<location>`` value can only be  
 
 1. cloud (represent cloud database)
 2. prime (represent on-premises datbase)
+
+The transformer syntax example is ``transform:db:<location>:tag[schema.procedure]`` or ``transform:ud:``
 
 The ``schema.procedure`` should represent the procedure of the transformer which transform the data.  
 
@@ -70,7 +79,7 @@ The transformer procedure should have the below syntax in the **text** format so
  source:value1,value2|
  target:value3|;
  source:value4|
- target:value5;
+ target:value5|;
 </vih>
 ```
 
@@ -79,6 +88,17 @@ The source should represent the table that the data is used to transform.For exa
 The target should represent the table the data was updated or inserted into.For example ``INSERT|UPDATE|INTO``.
 
 It is recommended that the values should be in the ``schema.table`` format.
+
+```
+Example
+
+<vih>
+source:foo.hello,foo.world|
+target:foo.data|;
+source:foo.data,placeholder.people|
+target:placeholder.citizen|;
+</vih>
+```
 
 
 # Caller
