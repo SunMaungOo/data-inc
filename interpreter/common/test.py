@@ -3,7 +3,7 @@ from core import identify_component_value,ComponentValueType
 from core import parse_database_component_value,DBComponentValue,UndefinedComponentValue
 from core import parse_blob_component_value,BlobComponentValue
 from core import parse_loader_component,parse_caller_component,parse_transformer_component
-from graph import remove_node,Edge,edge_to_dict,merge_edge,merge_edges
+from graph import remove_node,Edge,edge_to_dict,merge_edge,merge_edges,replace_nodes,get_used_edge
 from typing import List
 
 def test_value_identify_component():
@@ -484,6 +484,56 @@ def test_simple_merge_edges():
     assert len(merge_dict["D"])==1
     assert "C" in merge_dict["D"]
 
+def test_value_replace_nodes():
+    # old
+    # A -> B -> C
+
+    # replace B with D and E
+
+    # new 
+    # A -> D  -> C
+    #   -> E  -> C
+
+    edges:List[Edge] = list()
+
+    edges.append(
+        Edge
+        (
+            node_name="A",
+            parent_nodes=[]
+        )
+    )
+
+    edges.append(
+        Edge
+        (
+            node_name="B",
+            parent_nodes=["A"]
+        )
+    )
+
+    edges.append(
+        Edge
+        (
+            node_name="C",
+            parent_nodes=["B"]
+        )
+    )
+
+    replace_edges = replace_nodes(node_name="B",replace_node_names=["D","E"],edges=edges)
+
+    replace_edges_dict = edge_to_dict(edges=replace_edges)
+
+    assert len(replace_edges)==4
+    assert len(replace_edges_dict["A"])==0
+    assert len(replace_edges_dict["C"])==2
+    assert "D" in replace_edges_dict["C"]
+    assert "E" in replace_edges_dict["C"]
+    assert len(replace_edges_dict["D"])==1
+    assert "A" in replace_edges_dict["D"]
+    assert len(replace_edges_dict["E"])==1
+    assert "A" in replace_edges_dict["E"]
+
 
 def main():
     test_value_identify_component()
@@ -503,6 +553,7 @@ def main():
     test_multi_node_merge_edge()
     test_multi_node_merge_edge()
     test_simple_merge_edges()
+    test_value_replace_nodes()
 
 if __name__=="__main__":
     main()

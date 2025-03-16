@@ -204,7 +204,76 @@ def merge_edges(graphs:List[List[Edge]])->List[Edge]:
 
     return merge_graph
     
+def replace_nodes(node_name:str,replace_node_names:List[str],edges:List[Edge])->Optional[List[Edge]]:
+
+    node = get_node(node_name=node_name,edges=edges)
+
+    if node is None or node_name in replace_node_names:
+        return None
     
+    new_nodes:List[Edge] = list()
+
+    for replace_node_name in replace_node_names:
+        new_nodes.append(
+            Edge
+            (
+                node_name=replace_node_name,\
+                parent_nodes=node.parent_nodes
+            )
+        )
+
+    edges.extend(new_nodes)
+
+    used_edge = get_used_edge(node_name=node_name,edges=edges)
+
+    if len(used_edge)>0:
+
+        new_edge:List[Edge] = list()
+
+        new_used_edge:List[Edge] = list()
+
+        for node in used_edge:
+            new_parents = node.parent_nodes
+
+            #remove the node that we are going to replace as parent
+
+            new_parents.remove(node_name)
+
+            #add new node that we are going to replace with as parent
+
+            for replace_node_name in replace_node_names:
+                if replace_node_name not in new_parents:
+                    new_parents.append(replace_node_name)
+
+            new_used_edge.append(
+                Edge
+                (
+                    node_name=node.node_name,\
+                    parent_nodes=new_parents
+                )
+            )
+
+        new_parent_used_edge = edge_to_dict(new_used_edge)
+ 
+        for edge in edges:
+            if edge.node_name in new_parent_used_edge:
+
+                new_edge.append(
+                    Edge
+                    (
+                        node_name=edge.node_name,
+                        parent_nodes=new_parent_used_edge[edge.node_name]
+                    )
+                )
+
+                continue
+
+            new_edge.append(edge)
+
+        edges = new_edge
+
+
+    return remove_node(node_name=node_name,edges=edges)    
 
 
 
