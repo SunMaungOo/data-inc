@@ -3,7 +3,9 @@ from core import identify_component_value,ComponentValueType
 from core import parse_database_component_value,DBComponentValue,UndefinedComponentValue
 from core import parse_blob_component_value,BlobComponentValue
 from core import parse_loader_component,parse_caller_component,parse_transformer_component
-from graph import remove_node,Edge,edge_to_dict,merge_edge,merge_edges,replace_nodes,get_used_edge
+from graph import remove_node,Edge,edge_to_dict,merge_edge,merge_edges,replace_nodes
+from graph import get_disjointed_nodes,get_last_nodes,get_first_nodes,join_to_node
+from graph import replace_node_parents,replace_node_with_edge
 from typing import List
 
 def test_value_identify_component():
@@ -534,6 +536,426 @@ def test_value_replace_nodes():
     assert len(replace_edges_dict["E"])==1
     assert "A" in replace_edges_dict["E"]
 
+def test_value_get_disjointed_nodes():
+
+    # A -> B
+    # C
+
+    edges:List[Edge] = list()
+
+    edges.append(
+        Edge
+        (
+            node_name="A",
+            parent_nodes=[]
+        )
+    )
+
+    edges.append(
+        Edge
+        (
+            node_name="B",
+            parent_nodes=["A"]
+        )
+    )
+
+    edges.append(
+        Edge
+        (
+            node_name="C",
+            parent_nodes=[]
+        )
+    )
+
+    disjointed_nodes = get_disjointed_nodes(edges=edges)
+
+    assert len(disjointed_nodes)==1
+    assert disjointed_nodes[0].node_name=="C"
+    assert len(disjointed_nodes[0].parent_nodes)==0
+
+
+def test_value_get_last_nodes():
+    # A -> B
+    # C
+
+    edges:List[Edge] = list()
+
+    edges.append(
+        Edge
+        (
+            node_name="A",
+            parent_nodes=[]
+        )
+    )
+
+    edges.append(
+        Edge
+        (
+            node_name="B",
+            parent_nodes=["A"]
+        )
+    )
+
+    edges.append(
+        Edge
+        (
+            node_name="C",
+            parent_nodes=[]
+        )
+    )
+
+    last_nodes = get_last_nodes(edges=edges)
+
+    assert len(last_nodes)==1
+    assert last_nodes[0].node_name=="B"
+    assert len(last_nodes[0].parent_nodes)>0
+
+
+def test_value_get_first_nodes():
+    # A -> B
+    # C
+
+    edges:List[Edge] = list()
+
+    edges.append(
+        Edge
+        (
+            node_name="A",
+            parent_nodes=[]
+        )
+    )
+
+    edges.append(
+        Edge
+        (
+            node_name="B",
+            parent_nodes=["A"]
+        )
+    )
+
+    edges.append(
+        Edge
+        (
+            node_name="C",
+            parent_nodes=[]
+        )
+    )
+
+    first_nodes = get_first_nodes(edges=edges)
+
+    assert len(first_nodes)==1
+    assert first_nodes[0].node_name=="A"
+    assert len(first_nodes[0].parent_nodes)==0
+
+def test_no_existing_node_join_to_node():
+    
+    # org
+    # A -> B -> C
+
+    # concate edge
+    # D->E
+
+    # merge 
+    # A -> B -> C
+    #        -> D -> E
+
+    edges:List[Edge] = list()
+
+    edges.append(
+        Edge
+        (
+            node_name="A",
+            parent_nodes=[]
+        )
+    )
+
+    edges.append(
+        Edge
+        (
+            node_name="B",
+            parent_nodes=["A"]
+        )
+    )
+
+    edges.append(
+        Edge
+        (
+            node_name="C",
+            parent_nodes=["B"]
+        )
+    )
+
+    concate_edges:List[Edge] = list()
+
+    concate_edges.append(
+        Edge
+        (
+            node_name="D",
+            parent_nodes=[]
+        )
+    )
+
+    concate_edges.append(
+        Edge
+        (
+            node_name="E",
+            parent_nodes=["D"]
+        )
+    )
+
+    join_edges = join_to_node(node_name="B",concate_edges=concate_edges,edges=edges)
+
+    join_edges_dicts = edge_to_dict(edges=join_edges)
+
+    assert len(join_edges)==5
+    assert len(join_edges_dicts["A"])==0
+    assert len(join_edges_dicts["B"])==1
+    assert "A" in join_edges_dicts["B"]
+    assert len(join_edges_dicts["C"])==1
+    assert "B" in join_edges_dicts["C"]
+    assert len(join_edges_dicts["D"])==1
+    assert "B" in join_edges_dicts["D"]
+    assert len(join_edges_dicts["E"])==1
+    assert "D" in join_edges_dicts["E"]
+
+def test_existing_node_join_to_node():
+    
+    # org
+    # A -> B -> C
+
+    # concate edge
+    # B->D->E
+    # F 
+
+    # merge 
+    # A -> B -> C
+    #        -> D -> E
+    #        -> F
+
+    edges:List[Edge] = list()
+
+    edges.append(
+        Edge
+        (
+            node_name="A",
+            parent_nodes=[]
+        )
+    )
+
+    edges.append(
+        Edge
+        (
+            node_name="B",
+            parent_nodes=["A"]
+        )
+    )
+
+    edges.append(
+        Edge
+        (
+            node_name="C",
+            parent_nodes=["B"]
+        )
+    )
+
+    concate_edges:List[Edge] = list()
+
+    concate_edges.append(
+        Edge
+        (
+            node_name="B",
+            parent_nodes=[]
+        )
+    )
+
+    concate_edges.append(
+        Edge
+        (
+            node_name="D",
+            parent_nodes=["B"]
+        )
+    )
+
+    concate_edges.append(
+        Edge
+        (
+            node_name="E",
+            parent_nodes=["D"]
+        )
+    )
+
+    concate_edges.append(
+        Edge
+        (
+            node_name="F",
+            parent_nodes=[]
+        )
+    )
+
+
+    join_edges = join_to_node(node_name="B",concate_edges=concate_edges,edges=edges)
+
+    join_edges_dicts = edge_to_dict(edges=join_edges)
+
+    assert len(join_edges)==6
+    assert len(join_edges_dicts["A"])==0
+    assert len(join_edges_dicts["B"])==1
+    assert "A" in join_edges_dicts["B"]
+    assert len(join_edges_dicts["C"])==1
+    assert "B" in join_edges_dicts["C"]
+    assert len(join_edges_dicts["D"])==1
+    assert "B" in join_edges_dicts["D"]
+    assert len(join_edges_dicts["E"])==1
+    assert "D" in join_edges_dicts["E"]
+    assert len(join_edges_dicts["F"])==1
+    assert "B" in join_edges_dicts["F"]
+
+def test_value_replace_node_parents():
+
+    # org 
+    # A -> B -> C -> D -> E
+    #             
+
+    # replace B with D,E
+
+    # new
+    # A -> B
+    # C <--> D -> E
+    # 
+    # C used both D and E
+    # both C and D have circular dependency
+    #
+
+    edges:List[Edge] = list()
+
+    edges.append(
+        Edge
+        (
+            node_name="A",
+            parent_nodes=[]
+        )
+    )
+
+    edges.append(
+        Edge
+        (
+            node_name="B",
+            parent_nodes=["A"]
+        )
+    )
+
+
+    edges.append(
+        Edge
+        (
+            node_name="C",
+            parent_nodes=["B"]
+        )
+    )
+
+    edges.append(
+        Edge
+        (
+            node_name="D",
+            parent_nodes=["C"]
+        )
+    )
+
+    edges.append(
+        Edge
+        (
+            node_name="E",
+            parent_nodes=["D"]
+        )
+    )
+
+    replace_nodes = replace_node_parents(node_name="B",replace_node_names=["D","E"],edges=edges)
+
+    replace_nodes_dict = edge_to_dict(replace_nodes)
+
+    assert len(replace_nodes)==5
+    assert len(replace_nodes_dict["A"])==0
+    assert len(replace_nodes_dict["B"])==1
+    assert "A" in replace_nodes_dict["B"]
+    assert len(replace_nodes_dict["C"])==2
+    assert "D" in replace_nodes_dict["C"]
+    assert "E" in replace_nodes_dict["C"]
+    assert len(replace_nodes_dict["D"])==1
+    assert "C" in replace_nodes_dict["D"]
+    assert len(replace_nodes_dict["E"])==1
+    assert "D" in replace_nodes_dict["E"]
+
+def test_value_replace_node_with_edge():
+
+    # org 
+    # A -> B -> G
+
+    # replace edge
+    # C -> D
+
+    # merge 
+    # A -> C <--> D -> G
+
+    edges:List[Edge] = list()
+
+    edges.append(
+        Edge
+        (
+            node_name="A",
+            parent_nodes=[]
+        )
+    )
+
+    edges.append(
+        Edge
+        (
+            node_name="B",
+            parent_nodes=["A"]
+        )
+    )
+
+    edges.append(
+        Edge
+        (
+            node_name="G",
+            parent_nodes=["B"]
+        )
+    )
+
+    replace_edges:List[Edge] = list()
+
+    replace_edges.append(
+        Edge
+        (
+            node_name="C",
+            parent_nodes=[]
+        )
+    )
+
+    replace_edges.append(
+        Edge
+        (
+            node_name="D",
+            parent_nodes=["C"]
+        )
+    )
+
+    replace_nodes = replace_node_with_edge(node_name="B",\
+                                           replace_edges=replace_edges,\
+                                           edges=edges)
+    
+    replace_nodes_dict = edge_to_dict(replace_nodes)
+
+    assert len(replace_nodes)==4
+    assert len(replace_nodes_dict["A"])==0
+    assert len(replace_nodes_dict["C"])==2
+    assert "A" in replace_nodes_dict["C"]
+    assert "D" in replace_nodes_dict["C"]
+    assert len(replace_nodes_dict["D"])==1
+    assert "C" in replace_nodes_dict["D"]
+    assert len(replace_nodes_dict["G"])==1
+    assert "D" in replace_nodes_dict["G"]
+
 
 def main():
     test_value_identify_component()
@@ -554,6 +976,13 @@ def main():
     test_multi_node_merge_edge()
     test_simple_merge_edges()
     test_value_replace_nodes()
+    test_value_get_disjointed_nodes()
+    test_value_get_last_nodes()
+    test_value_get_first_nodes()
+    test_no_existing_node_join_to_node()
+    test_existing_node_join_to_node()
+    test_value_replace_node_parents()
+    test_value_replace_node_with_edge()
 
 if __name__=="__main__":
     main()
