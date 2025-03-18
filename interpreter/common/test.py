@@ -1020,7 +1020,7 @@ def main():
     test_value_replace_node_parents()
     test_value_replace_node_with_edge()
     test_value_get_vih_statement()
-    #test_null_get_vih()
+    test_null_get_vih()
     test_value_get_vih()
 
 if __name__=="__main__":
