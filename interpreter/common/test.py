@@ -7,6 +7,8 @@ from graph import remove_node,Edge,edge_to_dict,merge_edge,merge_edges,replace_n
 from graph import get_disjointed_nodes,get_last_nodes,get_first_nodes,join_to_node
 from graph import replace_node_parents,replace_node_with_edge
 from vih import get_vih,get_vih_statement
+from vih import VIH,vih_to_edge,vihs_to_edges
+
 from typing import List
 
 def test_value_identify_component():
@@ -993,6 +995,70 @@ def test_value_get_vih():
     assert "e" in vih[1].source
     assert len(vih[1].target) == 0
 
+def test_value_vih_to_edge():
+
+    # edges
+    #  A  -> C 
+    #  B  -> 
+
+    vih = VIH(
+        order=1,
+        source=["A","B"],
+        target=["C"]
+    )
+
+    edges = vih_to_edge(vih=vih)
+
+    edges_to_dict = edge_to_dict(edges=edges)
+
+    assert len(edges)==3
+    assert len(edges_to_dict["A"])==0
+    assert len(edges_to_dict["B"])==0
+    assert len(edges_to_dict["C"])==2
+    assert "A" in edges_to_dict["C"]
+    assert "B" in edges_to_dict["C"]
+
+def test_value_vihs_to_edges():
+
+    # edges
+    #  A  -> C -> D 
+    #  B  -> 
+
+    vihs:List[VIH] = list()
+
+    vihs.append(
+        VIH
+        (
+            order=1,
+            source=["A","B"],
+            target=["C"]
+        )
+    )
+
+    vihs.append(
+        VIH
+        (
+            order=2,
+            source=["C"],
+            target=["D"]
+        )
+    )
+
+    edges = vihs_to_edges(vihs=vihs)
+
+    edges_to_dict = edge_to_dict(edges=edges)
+
+    assert len(edges)==4
+    assert len(edges_to_dict["A"])==0
+    assert len(edges_to_dict["B"])==0
+    assert len(edges_to_dict["C"])==2
+    assert "A" in edges_to_dict["C"]
+    assert "B" in edges_to_dict["C"]
+    assert len(edges_to_dict["D"])==1
+    assert "C" in edges_to_dict["D"]
+
+
+
 def main():
     test_value_identify_component()
     test_null_identify_component()
@@ -1022,6 +1088,8 @@ def main():
     test_value_get_vih_statement()
     test_null_get_vih()
     test_value_get_vih()
+    test_value_vih_to_edge()
+    test_value_vihs_to_edges()
 
 if __name__=="__main__":
     main()

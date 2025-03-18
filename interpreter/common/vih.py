@@ -1,5 +1,6 @@
 from typing import List,Optional
 from dataclasses import dataclass
+from graph import Edge,merge_edges
 
 START_BLOCK = "<vih>"
 END_BLOCK = "</vih>"
@@ -80,3 +81,35 @@ def parse_target(statement:str)->List[str]:
 
 def remove_empty(values:List[str])->List[str]:
     return [x for x in values if len(x)>0]
+
+def vih_to_edge(vih:VIH)->List[Edge]:
+    edges:List[Edge] = list()
+
+    for source in vih.source:
+        edges.append(
+            Edge
+            (
+                node_name=source,
+                parent_nodes=[]
+            )
+        )
+
+    for target in vih.target:
+        edges.append(
+            Edge
+            (
+                node_name=target,
+                parent_nodes=vih.source
+            )
+        )
+    
+    return edges
+
+def vihs_to_edges(vihs:List[VIH])->List[Edge]:
+    
+    graphs:List[List[Edge]] = list()
+
+    for vih in vihs:
+        graphs.append(vih_to_edge(vih=vih))
+
+    return merge_edges(graphs=graphs)
