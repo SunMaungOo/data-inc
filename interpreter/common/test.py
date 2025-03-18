@@ -6,6 +6,7 @@ from core import parse_loader_component,parse_caller_component,parse_transformer
 from graph import remove_node,Edge,edge_to_dict,merge_edge,merge_edges,replace_nodes
 from graph import get_disjointed_nodes,get_last_nodes,get_first_nodes,join_to_node
 from graph import replace_node_parents,replace_node_with_edge
+from vih import get_vih,get_vih_statement
 from typing import List
 
 def test_value_identify_component():
@@ -956,6 +957,41 @@ def test_value_replace_node_with_edge():
     assert len(replace_nodes_dict["G"])==1
     assert "D" in replace_nodes_dict["G"]
 
+def test_value_get_vih_statement():
+    
+    value = "hello<vih>source:a,b,c|target:d|;</vih> world"
+
+    vih_statement = get_vih_statement(text=value)
+
+    assert vih_statement == "source:a,b,c|target:d|;"
+
+def test_null_get_vih():
+    
+    value = "hello<vih>source:a,b,c|target:d|;source:e|target:|;source:|target:g;</vih> world"
+
+    vih_statement = get_vih_statement(text=value)
+
+    vih = get_vih(vih_statement=vih_statement)
+
+    assert vih is None
+
+def test_value_get_vih():
+    
+    value = "hello<vih>source:a,b,c|target:d|;source:e|target:|;</vih> world"
+
+    vih_statement = get_vih_statement(text=value)
+    
+    vih = get_vih(vih_statement=vih_statement)
+    
+    assert len(vih)==2
+    assert len(vih[0].source) == 3
+    assert "a" in vih[0].source
+    assert "b" in vih[0].source
+    assert "c" in vih[0].source
+    assert len(vih[0].target) == 1
+    assert len(vih[1].source) == 1
+    assert "e" in vih[1].source
+    assert len(vih[1].target) == 0
 
 def main():
     test_value_identify_component()
@@ -983,6 +1019,9 @@ def main():
     test_existing_node_join_to_node()
     test_value_replace_node_parents()
     test_value_replace_node_with_edge()
+    test_value_get_vih_statement()
+    #test_null_get_vih()
+    test_value_get_vih()
 
 if __name__=="__main__":
     main()
