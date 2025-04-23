@@ -62,15 +62,14 @@ def get_activities(pipeline_json:str)->Optional[List[Activity]]:
     except:
         return None
     
-    if not "properties" in pipeline_json:
+    if not "properties" in json_object:
+        return None    
+    if not "activities" in json_object["properties"]:
         return None
-    
-    if not "activities" in pipeline_json["properties"]:
-        return None
-    
+        
     activities:List[Activity] = list()
 
-    for activity_json in pipeline_json["properties"]["activities"]:
+    for activity_json in json_object["properties"]["activities"]:
 
         activity = get_activity(activity_json=activity_json,outer_activity=None)
 
@@ -94,7 +93,7 @@ def get_activities(pipeline_json:str)->Optional[List[Activity]]:
 
     return activities
 
-def get_for_each_nested_activities(activity_json:str,\
+def get_for_each_nested_activities(activity_json:Dict[str,Any],\
                           outer_activity:str)->Optional[List[Activity]]:
     
     if activity_json["type"]!="foreach":
@@ -111,7 +110,7 @@ def get_for_each_nested_activities(activity_json:str,\
                         for x in activity_json["typeProperties"]["activities"]]
 
 
-def get_conditional_nested_activities(activity_json:str,\
+def get_conditional_nested_activities(activity_json:Dict[str,Any],\
                                       outer_activity:str)->Optional[List[Activity]]:
     
     activities:List[Activity] = list()
@@ -135,7 +134,7 @@ def get_conditional_nested_activities(activity_json:str,\
     return activities
     
 
-def get_activity(activity_json:str,outer_activity:str=None)->Optional[Activity]:
+def get_activity(activity_json:Dict[str,Any],outer_activity:str=None)->Optional[Activity]:
 
     if "name" not in activity_json:
         return None
@@ -152,7 +151,7 @@ def get_activity(activity_json:str,outer_activity:str=None)->Optional[Activity]:
                     outer_activity=outer_activity)
 
 
-def get_parent_activities(activity_json:str)->List[str]:
+def get_parent_activities(activity_json:Dict[str,Any])->List[str]:
      
     parent_activities:List[str] = list()
 
@@ -163,9 +162,9 @@ def get_parent_activities(activity_json:str)->List[str]:
 
     return parent_activities
 
-def get_user_properties(activity_json:str)->Dict[str,str]:
+def get_user_properties(activity_json:Dict[str,Any])->Dict[str,str]:
 
-    user_properties:Dict[str,str] = list()
+    user_properties:Dict[str,str] = dict()
 
     if "userProperties" in activity_json:
         for property in activity_json["userProperties"]:
@@ -180,7 +179,7 @@ def get_components(key:str,activities:List[Activity])->List[Component]:
 
     for actv in activities:
 
-        if key not in actv.user_properties[key]:
+        if key not in actv.user_properties:
             continue
 
         
